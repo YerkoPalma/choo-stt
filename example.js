@@ -25,4 +25,7 @@ function listen (state, emitter) {
     var span = document.getElementById('result')
     span.textContent += result
   })
+  emitter.on('stt:error', function (e) {
+    console.error(e)
+  })
 }

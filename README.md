@@ -28,7 +28,7 @@ function mainView (state, emit) {
 }
 function listen (state, emitter) {
   emitter.on('stt:result', function (result) {
-    console.log(result[0][0].transcript)
+    console.log(result)
   })
 }
 ```

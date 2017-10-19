@@ -52,6 +52,12 @@ function stt (state, emitter) {
     emitter.on(events.START, function () {
       recognition.start()
     })
+    emitter.on(events.STOP, function () {
+      recognition.stop()
+    })
+    emitter.on(events.ABORT, function () {
+      recognition.abort()
+    })
     recognition.onend = function () {
       emitter.emit(events.END)
     }
@@ -66,6 +72,18 @@ function stt (state, emitter) {
     }
     recognition.onaudioend = function (event) {
       emitter.emit(events.AUDIO_END, event)
+    }
+    recognition.onsoundstart = function (event) {
+      emitter.emit(events.SOUND_START, event)
+    }
+    recognition.onsoundend = function (event) {
+      emitter.emit(events.SOUND_END, event)
+    }
+    recognition.onspeechstart = function (event) {
+      emitter.emit(events.SPEECH_START, event)
+    }
+    recognition.onspeechend = function (event) {
+      emitter.emit(events.SPEECH_END, event)
     }
   } catch (e) {
     emitter.emit(events.ERROR, e)
