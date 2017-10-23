@@ -18,6 +18,7 @@
   "devDependencies": {
     "budo": "^10.0.4",
     "choo": "^6.4.2",
+    "choo-devtools": "^2.0.0",
     "snazzy": "^7.0.0",
     "standard": "^10.0.3"
   }

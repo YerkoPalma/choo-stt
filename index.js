@@ -32,9 +32,9 @@ function stt (state, emitter) {
         get: () => recognition.lang,
         set: (lang) => { recognition.lang = lang }
       },
-      continuos: {
-        get: () => recognition.continuos,
-        set: (continuos) => { recognition.continuos = continuos }
+      continuous: {
+        get: () => recognition.continuous,
+        set: (continuous) => { recognition.continuous = continuous }
       },
       interimResults: {
         get: () => recognition.interimResults,
@@ -62,7 +62,9 @@ function stt (state, emitter) {
       emitter.emit(events.END)
     }
     recognition.onresult = function (event) {
-      emitter.emit(events.RESULT, event.result[0][0].transcript, event)
+      var last = event.results.length - 1
+      // always send the first alternative of the las result
+      emitter.emit(events.RESULT, event.results[last][0].transcript, event)
     }
     recognition.onnomatch = function (event) {
       emitter.emit(events.NO_MATCH, event)
