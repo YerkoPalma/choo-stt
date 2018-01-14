@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "standard --verbose | snazzy",
-    "start": "budo -p 8080 -H 0.0.0.0 example.js"
+    "start": "bankai start example.js"
   },
   "keywords": [
     "choo",
@@ -16,9 +16,10 @@
   "author": "Yerko Palma",
   "license": "MIT",
   "devDependencies": {
+    "bankai": "^9.2.0",
     "budo": "^10.0.4",
-    "choo": "^6.4.2",
-    "choo-devtools": "^2.0.0",
+    "choo": "^6.6.1",
+    "choo-devtools": "^2.3.3",
     "snazzy": "^7.0.0",
     "standard": "^10.0.3"
   }

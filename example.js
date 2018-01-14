@@ -33,6 +33,9 @@ function listen (state, emitter) {
     var span = document.getElementById('result')
     span.textContent += '\n' + result.trim()
   })
+  emitter.emit('stt:set-command', ':color background', function (color) {
+    document.body.style.backgroundColor = color
+  })
   emitter.on('stt:error', function (e) {
     console.error(e)
   })

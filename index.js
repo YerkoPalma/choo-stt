@@ -13,7 +13,8 @@ var events = stt.events = {
   SOUND_START: 'stt:sound-start',
   SOUND_END: 'stt:sound-end',
   SPEECH_START: 'stt:speech-start',
-  SPEECH_END: 'stt:speech-end'
+  SPEECH_END: 'stt:speech-end',
+  SET_COMMAND: 'stt:set-command'
 }
 
 function stt (state, emitter) {
@@ -26,6 +27,7 @@ function stt (state, emitter) {
     if (!SpeechRecognition) throw new Error('stt: SpeechRecognition not supported')
     var recognition = new SpeechRecognition()
     state.stt = {}
+    state.stt.commands = {}
     // define custom getters and setters to keep in sync with recognition object
     Object.defineProperties(state.stt, {
       lang: {
@@ -58,13 +60,40 @@ function stt (state, emitter) {
     emitter.on(events.ABORT, function () {
       recognition.abort()
     })
+    emitter.on(events.SET_COMMAND, function (name, cb) {
+      state.stt.commands[name] = cb
+    })
     recognition.onend = function () {
       emitter.emit(events.END)
     }
     recognition.onresult = function (event) {
-      var last = event.results.length - 1
-      // always send the first alternative of the las result
-      emitter.emit(events.RESULT, event.results[last][0].transcript, event)
+      emitter.emit(events.RESULT, event.results[event.resultIndex][0].transcript, event)
+      var limit = state.stt.maxAlternatives > 5 ? 5 : state.stt.maxAlternatives
+      var optionalParam = /\s*\((.*?)\)\s*/g
+      var optionalRegex = /(\(\?:[^)]+\))\?/g
+      var namedParam = /(\(\?)?:\w+/g
+      var escapeRegExp = /[-{}[\]+?.,\\^$|#]/g
+      var commandToRegExp = function (command) {
+        command = command.replace(escapeRegExp, '\\$&')
+                  .replace(optionalParam, '(?:$1)?')
+                  .replace(namedParam, function (match, optional) {
+                    return optional ? match : '([^\\s]+)'
+                  })
+                  .replace(optionalRegex, '\\s*$1?\\s*')
+        return new RegExp('^' + command + '$', 'i')
+      }
+      for (var i = 0; i < limit; i++) {
+        for (var command in state.stt.commands) {
+          var result = commandToRegExp(command).exec(event.results[event.resultIndex][i].transcript)
+          if (result) {
+            var parameters = result.slice(1)
+            if (typeof state.stt.commands[command] === 'function') {
+              state.stt.commands[command].apply(this, parameters)
+              break
+            }
+          }
+        }
+      }
     }
     recognition.onnomatch = function (event) {
       emitter.emit(events.NO_MATCH, event)
