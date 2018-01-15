@@ -17,58 +17,18 @@ var events = stt.events = {
   SET_COMMAND: 'stt:set-command'
 }
 
-function stt (state, emitter) {
-  var SpeechRecognition = window.SpeechRecognition ||
-                        window.webkitSpeechRecognition ||
-                        window.mozSpeechRecognition ||
-                        window.msSpeechRecognition ||
-                        window.oSpeechRecognition
-  try {
-    if (!SpeechRecognition) throw new Error('stt: SpeechRecognition not supported')
-    var recognition = new SpeechRecognition()
-    state.stt = {}
-    state.stt.commands = {}
-    // define custom getters and setters to keep in sync with recognition object
-    Object.defineProperties(state.stt, {
-      lang: {
-        get: () => recognition.lang,
-        set: (lang) => { recognition.lang = lang }
-      },
-      continuous: {
-        get: () => recognition.continuous,
-        set: (continuous) => { recognition.continuous = continuous }
-      },
-      interimResults: {
-        get: () => recognition.interimResults,
-        set: (interimResults) => { recognition.interimResults = interimResults }
-      },
-      maxAlternatives: {
-        get: () => recognition.maxAlternatives,
-        set: (maxAlternatives) => { recognition.maxAlternatives = maxAlternatives }
-      },
-      serviceURI: {
-        get: () => recognition.serviceURI,
-        set: (serviceURI) => { recognition.serviceURI = serviceURI }
-      }
-    })
-    emitter.on(events.START, function () {
-      recognition.start()
-    })
-    emitter.on(events.STOP, function () {
-      recognition.stop()
-    })
-    emitter.on(events.ABORT, function () {
-      recognition.abort()
-    })
-    emitter.on(events.SET_COMMAND, function (name, cb) {
-      state.stt.commands[name] = cb
-    })
-    recognition.onend = function () {
-      emitter.emit(events.END)
-    }
-    recognition.onresult = function (event) {
-      emitter.emit(events.RESULT, event.results[event.resultIndex][0].transcript, event)
-      var limit = state.stt.maxAlternatives > 5 ? 5 : state.stt.maxAlternatives
+function stt () {
+  return function (state, emitter) {
+    var SpeechRecognition = window.SpeechRecognition ||
+                          window.webkitSpeechRecognition ||
+                          window.mozSpeechRecognition ||
+                          window.msSpeechRecognition ||
+                          window.oSpeechRecognition
+    try {
+      if (!SpeechRecognition) throw new Error('stt: SpeechRecognition not supported')
+      var recognition = new SpeechRecognition()
+      state.stt = {}
+      state.stt.commands = {}
       var optionalParam = /\s*\((.*?)\)\s*/g
       var optionalRegex = /(\(\?:[^)]+\))\?/g
       var namedParam = /(\(\?)?:\w+/g
@@ -82,41 +42,83 @@ function stt (state, emitter) {
                   .replace(optionalRegex, '\\s*$1?\\s*')
         return new RegExp('^' + command + '$', 'i')
       }
-      for (var i = 0; i < limit; i++) {
-        for (var command in state.stt.commands) {
-          var result = commandToRegExp(command).exec(event.results[event.resultIndex][i].transcript)
-          if (result) {
-            var parameters = result.slice(1)
-            if (typeof state.stt.commands[command] === 'function') {
-              state.stt.commands[command].apply(this, parameters)
-              break
+      // define custom getters and setters to keep in sync with recognition object
+      Object.defineProperties(state.stt, {
+        lang: {
+          get: () => recognition.lang,
+          set: (lang) => { recognition.lang = lang }
+        },
+        continuous: {
+          get: () => recognition.continuous,
+          set: (continuous) => { recognition.continuous = continuous }
+        },
+        interimResults: {
+          get: () => recognition.interimResults,
+          set: (interimResults) => { recognition.interimResults = interimResults }
+        },
+        maxAlternatives: {
+          get: () => recognition.maxAlternatives,
+          set: (maxAlternatives) => { recognition.maxAlternatives = maxAlternatives }
+        },
+        serviceURI: {
+          get: () => recognition.serviceURI,
+          set: (serviceURI) => { recognition.serviceURI = serviceURI }
+        }
+      })
+      emitter.on(events.START, function () {
+        recognition.start()
+      })
+      emitter.on(events.STOP, function () {
+        recognition.stop()
+      })
+      emitter.on(events.ABORT, function () {
+        recognition.abort()
+      })
+      emitter.on(events.SET_COMMAND, function (name, cb) {
+        state.stt.commands[name] = cb
+      })
+      recognition.onend = function () {
+        emitter.emit(events.END)
+      }
+      recognition.onresult = function (event) {
+        emitter.emit(events.RESULT, event.results[event.resultIndex][0].transcript, event)
+        var limit = state.stt.maxAlternatives > 5 ? 5 : state.stt.maxAlternatives
+        for (var i = 0; i < limit; i++) {
+          for (var command in state.stt.commands) {
+            var result = commandToRegExp(command).exec(event.results[event.resultIndex][i].transcript)
+            if (result) {
+              var parameters = result.slice(1)
+              if (typeof state.stt.commands[command] === 'function') {
+                state.stt.commands[command].apply(this, parameters)
+                break
+              }
             }
           }
         }
       }
+      recognition.onnomatch = function (event) {
+        emitter.emit(events.NO_MATCH, event)
+      }
+      recognition.onaudiostart = function (event) {
+        emitter.emit(events.AUDIO_START, event)
+      }
+      recognition.onaudioend = function (event) {
+        emitter.emit(events.AUDIO_END, event)
+      }
+      recognition.onsoundstart = function (event) {
+        emitter.emit(events.SOUND_START, event)
+      }
+      recognition.onsoundend = function (event) {
+        emitter.emit(events.SOUND_END, event)
+      }
+      recognition.onspeechstart = function (event) {
+        emitter.emit(events.SPEECH_START, event)
+      }
+      recognition.onspeechend = function (event) {
+        emitter.emit(events.SPEECH_END, event)
+      }
+    } catch (e) {
+      emitter.emit(events.ERROR, e)
     }
-    recognition.onnomatch = function (event) {
-      emitter.emit(events.NO_MATCH, event)
-    }
-    recognition.onaudiostart = function (event) {
-      emitter.emit(events.AUDIO_START, event)
-    }
-    recognition.onaudioend = function (event) {
-      emitter.emit(events.AUDIO_END, event)
-    }
-    recognition.onsoundstart = function (event) {
-      emitter.emit(events.SOUND_START, event)
-    }
-    recognition.onsoundend = function (event) {
-      emitter.emit(events.SOUND_END, event)
-    }
-    recognition.onspeechstart = function (event) {
-      emitter.emit(events.SPEECH_START, event)
-    }
-    recognition.onspeechend = function (event) {
-      emitter.emit(events.SPEECH_END, event)
-    }
-  } catch (e) {
-    emitter.emit(events.ERROR, e)
   }
 }

@@ -2,7 +2,7 @@ var choo = require('choo')
 var html = require('choo/html')
 
 var app = choo()
-app.use(require('.'))
+app.use(require('.')())
 app.use(require('choo-devtools')())
 app.use(listen)
 app.route('/', mainView)

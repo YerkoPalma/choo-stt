@@ -11,7 +11,7 @@ var choo = require('choo')
 var html = require('choo/html')
 
 var app = choo()
-app.use(require('choo-stt'))
+app.use(require('choo-stt')())
 app.route('/', mainView)
 app.mount('body')
 
@@ -79,6 +79,10 @@ has been detected.
 ### `stt:speech-end` | `stt.events.SPEECH_END`
 Fired when speech recognised by the speech recognition service has stopped 
 being detected.
+
+### `stt:set-command` | `stt.events.SET_COMMAND`
+Set a command. When this event is fired, it set a command so it executes a callback 
+when the command pattern is listened.
 
 ## API
 ### stt = require('choo-stt')
