@@ -1,6 +1,6 @@
 {
   "name": "choo-stt",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Simple speech-to-text in the browser for choo",
   "main": "index.js",
   "scripts": {
