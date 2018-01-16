@@ -17,7 +17,6 @@
   "license": "MIT",
   "devDependencies": {
     "bankai": "^9.2.0",
-    "budo": "^10.0.4",
     "choo": "^6.6.1",
     "choo-devtools": "^2.3.3",
     "snazzy": "^7.0.0",

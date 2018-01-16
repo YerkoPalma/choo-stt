@@ -81,11 +81,12 @@ function stt () {
         emitter.emit(events.END)
       }
       recognition.onresult = function (event) {
-        emitter.emit(events.RESULT, event.results[event.resultIndex][0].transcript, event)
+        var text = event.results[event.resultIndex][0].transcript.trim()
+        emitter.emit(events.RESULT, text, event)
         var limit = state.stt.maxAlternatives > 5 ? 5 : state.stt.maxAlternatives
         for (var i = 0; i < limit; i++) {
           for (var command in state.stt.commands) {
-            var result = commandToRegExp(command).exec(event.results[event.resultIndex][i].transcript)
+            var result = commandToRegExp(command).exec(text)
             if (result) {
               var parameters = result.slice(1)
               if (typeof state.stt.commands[command] === 'function') {
